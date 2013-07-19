@@ -93,7 +93,7 @@ transform({ins, Idx, Len, Text, Size, Acs}, {del, Idx2, _Len2, _Text2, Size2, _A
   when Idx2 < Idx ->
     {ins, max(Idx - Size2, Idx2), Len - Size2, Text, Size, Acs};
 % Insert vs Equal
-transform(Op={ins, _Idx, _Len, _Text, _Acs}, {eq, _Acs2}) ->  Op;
+transform(Op={ins, _Idx, _Len, _Text, _Size, _Acs}, {eq, _Acs2}) ->  Op;
 
 % 'abc' =>  0:-2('c') | 1:-1('ac')
 % 'c'
@@ -159,7 +159,7 @@ transform({del, Idx, Len, Text, Size, Acs}, {ins, Idx2, _Len2, _Text2, Size2, _A
   when Idx2 < Idx ->
     {del, Idx + Size2, Len + Size2, Text, Size, Acs};
 % Delete vs Equal
-transform(Op={del, _Idx, _Len, _Text, _Acs}, {eq, _Acs2}) ->  Op;
+transform(Op={del, _Idx, _Len, _Text, _Size, _Acs}, {eq, _Acs2}) ->  Op;
 % Equal vs Anything
 transform(Op={eq, _Acs}, _) ->  Op.
 
