@@ -1,0 +1,12 @@
+{application, ot, [
+  {description, "Grammarly - OT."},
+  {vsn, "0.0.1"},
+  {modules, []},
+  {registered, []},
+  {applications, [
+    kernel,
+    stdlib
+  ]},
+  {mod, {ot, []}},
+  {env, []}
+]}.
