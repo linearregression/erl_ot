@@ -24,19 +24,19 @@ apply_to(Ops, Body) when is_list(Ops) ->
 % Insert operation
 apply_to({ins, Idx, Len, Text, _Size, _Acs}, Body) ->
   % todo: more informative error message
-  Len = utf_length(Body), % check text length
+  Len = bin_utf:len(Body), % check text length
   iolist_to_binary([
-    utf_substr(Body, 0, Idx),
+    bin_utf:substr(Body, 0, Idx),
     Text,
-    utf_substr(Body, Idx)
+    bin_utf:substr(Body, Idx)
   ]);
 % Delete operation
 apply_to({del, Idx, Len, Text, Size, _Acs}, Body) ->
-  Len = utf_length(Body), % check text length
-  Text = utf_substr(Body, Idx, Size), % check removed text
+  Len = bin_utf:len(Body), % check text length
+  Text = bin_utf:substr(Body, Idx, Size), % check removed text
   iolist_to_binary([
-    utf_substr(Body, 0, Idx),
-    utf_substr(Body, Idx + Size)
+    bin_utf:substr(Body, 0, Idx),
+    bin_utf:substr(Body, Idx + Size)
   ]);
 % Equal operation
 apply_to({eq, _Acs}, Body) -> Body.
@@ -102,10 +102,10 @@ transform({del, Idx, Len, Text, Size, Acs}, {del, Idx2, _Len2, _Text2, Size2, _A
     % in my range, don't delete them again!
     StartOfOther = min(Idx2 - Idx, Size),
     NewText = iolist_to_binary([
-      utf_substr(Text, 0, StartOfOther),
-      utf_substr(Text, StartOfOther + Size2)
+      bin_utf:substr(Text, 0, StartOfOther),
+      bin_utf:substr(Text, StartOfOther + Size2)
     ]),
-    {del, Idx, Len - Size2, NewText, utf_length(NewText), Acs};
+    {del, Idx, Len - Size2, NewText, bin_utf:len(NewText), Acs};
 % 'abc'=>   1:-1('ac') | 1:-2('a')
 % 'a'
 transform({del, Idx, _Len, _Text, Size, Acs}, {del, Idx, _Len2, _Text2, Size2, _Acs2})
@@ -115,8 +115,8 @@ transform({del, Idx, _Len, _Text, Size, Acs}, {del, Idx, _Len2, _Text2, Size2, _
     {eq, Acs};
 transform({del, Idx, Len, Text, _Size, Acs}, {del, Idx, _Len2, _Text2, Size2, _Acs2}) ->
   % the other deletion's range is shorter than mine
-  NewText = utf_substr(Text, Size2),
-  {del, Idx, Len - Size2, NewText, utf_length(NewText), Acs};
+  NewText = bin_utf:substr(Text, Size2),
+  {del, Idx, Len - Size2, NewText, bin_utf:len(NewText), Acs};
 % 'abcd'=>   2:-1('abd') | 0:-3('d')
 % 'd'
 transform({del, Idx, Len, Text, Size, Acs}, {del, Idx2, _Len2, _Text2, Size2, _Acs2})
@@ -125,8 +125,8 @@ transform({del, Idx, Len, Text, Size, Acs}, {del, Idx2, _Len2, _Text2, Size2, _A
     Overlap = Idx2 + Size2 - Idx,
     if Overlap >= Len -> {eq, Acs};
        Overlap > 0 ->
-        NewText = utf_substr(Text, Overlap),
-        {del, Idx2, Len - Size2, NewText, utf_length(NewText), Acs};
+        NewText = bin_utf:substr(Text, Overlap),
+        {del, Idx2, Len - Size2, NewText, bin_utf:len(NewText), Acs};
        true ->
         {del, Idx - Size2, Len - Size2, Text, Size, Acs}
     end;
@@ -137,11 +137,11 @@ transform({del, Idx, Len, Text, Size, Acs}, {ins, Idx2, _Len2, _Text2, Size2, _A
     % An insert is done within our deletion range
     % -> split it in to
     FirstHalfLen = Idx2 - Idx,
-    NewText1 = utf_substr(Text, 0, FirstHalfLen),
-    NewText2 = utf_substr(Text, FirstHalfLen),
+    NewText1 = bin_utf:substr(Text, 0, FirstHalfLen),
+    NewText2 = bin_utf:substr(Text, FirstHalfLen),
     [
-      {del, Idx, Len + Size2, NewText1, utf_length(NewText1), Acs},
-      {del, Idx2 + Size2, Len + Size2, NewText2, utf_length(NewText2), Acs}
+      {del, Idx, Len + Size2, NewText1, bin_utf:len(NewText1), Acs},
+      {del, Idx2 + Size2, Len + Size2, NewText2, bin_utf:len(NewText2), Acs}
     ];
 transform({del, Idx, Len, Text, Size, Acs}, {ins, Idx2, _Len2, _Text2, Size2, _Acs2})
   when Idx < Idx2 ->
@@ -209,7 +209,7 @@ unpack(String) ->
       unpack_base36(lists:nth(2, Match)), % index
       unpack_base36(lists:nth(3, Match)), % length
       Text,
-      utf_length(Text), % size
+      bin_utf:len(Text), % size
       unpack_base36(lists:nth(5, Match)) % accessory
     }
   end || Match <- Matches].
@@ -225,24 +225,6 @@ unpack_text(Text) ->
   Text1 = re:replace(Text, Re1, <<":">>, [global]),
   Text2 = re:replace(Text1, Re2, <<"%">>, [global]),
   iolist_to_binary(Text2).
-
-% TODO: find efficient way manipulating utf strings
-
-utf_length(Text) ->
-  length(unicode:characters_to_list(Text)).
-
-utf_substr(Text, Start) ->
-  T = unicode:characters_to_list(Text),
-  L = length(T),
-  S = max(0, min(L, Start)),
-  unicode:characters_to_binary(
-    string:substr(T, S + 1, L - S)
-  ).
-
-utf_substr(Text, Start, Len) ->
-  unicode:characters_to_binary(
-    string:substr(unicode:characters_to_list(Text), Start + 1, Len)
-  ).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
