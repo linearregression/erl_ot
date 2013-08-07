@@ -69,8 +69,8 @@ transform({ins, Idx, Len, Text, Size, Acs}, {ins, Idx2, _Len2, _Text2, Size2, _A
     {ins, Idx, Len + Size2, Text, Size, Acs};
 % 'abc'=>   1:+x('axbc') | 1:+y('aybc')
 % 'ayxbc'  -- depends on the accessory (the tie breaker)
-transform({ins, Idx, Len, Text, Size, Acs}, {ins, Idx2, _Len2, _Text2, Size2, Acs2})
-  when Idx =:= Idx2 andalso Acs < Acs2 ->
+transform({ins, Idx, Len, Text, Size, Acs}, {ins, Idx, _Len2, _Text2, Size2, Acs2})
+  when Acs < Acs2 ->
     {ins, Idx, Len + Size2, Text, Size, Acs};
 % 'abc'=>   1:+x('axbc') | 0:+x('xabc')
 % 'xaxbc'
@@ -84,9 +84,8 @@ transform({ins, Idx, Len, Text, Size, Acs}, {del, Idx2, _Len2, _Text2, Size2, _A
     {ins, Idx, Len - Size2, Text, Size, Acs};
 % 'abc'=>  1:+x('axbc') | 1:-1('ac')
 % 'axb'
-transform({ins, Idx, Len, Text, Size, Acs}, {del, Idx2, _Len2, _Text2, Size2, _Acs2})
-  when Idx =:= Idx2 ->
-    {ins, Idx, Len - Size2, Text, Size, Acs};
+transform({ins, Idx, Len, Text, Size, Acs}, {del, Idx, _Len2, _Text2, Size2, _Acs2}) ->
+  {ins, Idx, Len - Size2, Text, Size, Acs};
 % 'abc'=> 2:+x('abxc') | 0:-2('c')
 % 'xc'
 transform({ins, Idx, Len, Text, Size, Acs}, {del, Idx2, _Len2, _Text2, Size2, _Acs2})
@@ -109,16 +108,15 @@ transform({del, Idx, Len, Text, Size, Acs}, {del, Idx2, _Len2, _Text2, Size2, _A
     {del, Idx, Len - Size2, NewText, utf_length(NewText), Acs};
 % 'abc'=>   1:-1('ac') | 1:-2('a')
 % 'a'
-transform({del, Idx, _Len, _Text, Size, Acs}, {del, Idx2, _Len2, _Text2, Size2, _Acs2})
-  when Idx =:= Idx2 andalso Size =< Size2 ->
+transform({del, Idx, _Len, _Text, Size, Acs}, {del, Idx, _Len2, _Text2, Size2, _Acs2})
+  when Size =< Size2 ->
     % if the other operation already deleted some the characters
     % in my range, don't delete them again!
     {eq, Acs};
-transform({del, Idx, Len, Text, _Size, Acs}, {del, Idx2, _Len2, _Text2, Size2, _Acs2})
-  when Idx =:= Idx2 ->
-    % the other deletion's range is shorter than mine
-    NewText = utf_substr(Text, Size2),
-    {del, Idx, Len - Size2, NewText, utf_length(NewText), Acs};
+transform({del, Idx, Len, Text, _Size, Acs}, {del, Idx, _Len2, _Text2, Size2, _Acs2}) ->
+  % the other deletion's range is shorter than mine
+  NewText = utf_substr(Text, Size2),
+  {del, Idx, Len - Size2, NewText, utf_length(NewText), Acs};
 % 'abcd'=>   2:-1('abd') | 0:-3('d')
 % 'd'
 transform({del, Idx, Len, Text, Size, Acs}, {del, Idx2, _Len2, _Text2, Size2, _Acs2})
@@ -150,9 +148,8 @@ transform({del, Idx, Len, Text, Size, Acs}, {ins, Idx2, _Len2, _Text2, Size2, _A
     {del, Idx, Len + Size2, Text, Size, Acs};
 % 'abc'=>   1:-1('ac') | 1:+x('axbc')
 % 'axc'
-transform({del, Idx, Len, Text, Size, Acs}, {ins, Idx2, _Len2, _Text2, Size2, _Acs2})
-  when Idx =:= Idx2 ->
-    {del, Idx + Size2, Len + Size2, Text, Size, Acs};
+transform({del, Idx, Len, Text, Size, Acs}, {ins, Idx, _Len2, _Text2, Size2, _Acs2}) ->
+  {del, Idx + Size2, Len + Size2, Text, Size, Acs};
 % 'abc'=>   2:-1('ab') | 0:+x('xabc')
 % 'xab'
 transform({del, Idx, Len, Text, Size, Acs}, {ins, Idx2, _Len2, _Text2, Size2, _Acs2})
