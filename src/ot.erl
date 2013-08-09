@@ -1,6 +1,6 @@
 %%
 %% Operational transformation (OT) library for Erlang
-%% Copyright 2013 by Yuriy Bogdanov <chinsay@gmail.com>
+%% Copyright 2013 by Yuriy Bogdanov <chinsay gmail>
 %%
 %% This library is a port of: 
 %% https://github.com/marcelklehr/changesets
