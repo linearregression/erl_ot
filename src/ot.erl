@@ -64,6 +64,18 @@ apply_to({del, Idx, Len, Text, Size, _Acs}, Body) ->
 % Equal operation
 apply_to({eq, _Acs}, Body) -> Body.
 
+% Generates a full text swap changeset
+% containing delete operation followed by insert operation
+% see swap_text_test/0 for usage
+-spec swap_text(TextA :: op_text(), TextB :: op_text()) -> op_list().
+swap_text(TextA, TextB) ->
+  LenA = bin_utf:len(TextA),
+  LenB = bin_utf:len(TextB),
+  [
+    {del, 0, LenA, TextA, LenA, 0},
+    {ins, 0, LenA, TextB, LenB, 0}
+  ].
+
 % Transforms all contained operations against each
 % other in sequence and returns an array of those new operations
 sequencify([]) -> [];
@@ -327,6 +339,13 @@ accessories_test() ->
   Text1 = apply_to(transform(ChA, ChB), apply_to(ChB, Text)),
   Text2 = apply_to(transform(ChB, ChA), apply_to(ChA, Text)),
   ?assertEqual(Text1, Text2),
+  ok.
+
+swap_text_test() ->
+  TextA = <<"this is the first text">>,
+  TextB = <<"and this is the second text!!!">>,
+  SwapCh = swap_text(TextA, TextB),
+  ?assertEqual(apply_to(SwapCh, TextA), TextB),
   ok.
 
 transform_text(Text, PackChA, PackChB) ->
