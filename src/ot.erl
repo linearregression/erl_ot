@@ -348,6 +348,20 @@ swap_text_test() ->
   ?assertEqual(apply_to(SwapCh, TextA), TextB),
   ok.
 
+swap_text_empty_test() ->
+  TextA = <<"">>,
+  TextB = <<"and this is the second text!!!">>,
+  SwapCh = swap_text(TextA, TextB),
+  ?assertEqual(apply_to(SwapCh, TextA), TextB),
+  ok.
+
+swap_text_empty2_test() ->
+  TextA = <<"this is the first text">>,
+  TextB = <<"">>,
+  SwapCh = swap_text(TextA, TextB),
+  ?assertEqual(apply_to(SwapCh, TextA), TextB),
+  ok.
+
 transform_text(Text, PackChA, PackChB) ->
   ChA = unpack(PackChA),
   ChB = unpack(PackChB),
