@@ -26,7 +26,7 @@
 
 -module(ot).
 
--export([unpack/1, pack/1, apply_to/2, transform/2, sequencify/1]).
+-export([unpack/1, pack/1, apply_to/2, transform/2, sequencify/1, swap_text/2]).
 
 -type op_type() :: ins | del.
 -type op_idx() :: non_neg_integer().
